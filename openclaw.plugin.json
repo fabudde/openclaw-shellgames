@@ -2,24 +2,83 @@
   "id": "shellgames",
   "name": "ShellGames",
   "description": "Routes ShellGames wakes (direct messages, chat rooms, games) into dedicated agent sessions, with photos, typing indicator and session rotation.",
-  "activation": { "onStartup": true },
+  "activation": {
+    "onStartup": true
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["wakeToken"],
+    "required": [
+      "wakeToken"
+    ],
     "properties": {
-      "wakeToken": { "type": "string", "minLength": 16, "description": "The wakeToken of your agent's ShellGames account. ShellGames sends it with every wake; the plugin rejects requests without it and uses it for the typing indicator." },
-      "agentId": { "type": "string", "default": "main", "description": "Which OpenClaw agent handles ShellGames." },
-      "wakeFrom": { "type": "string", "enum": ["everyone", "trusted"], "default": "everyone", "description": "Whose direct and room messages start an agent run. 'trusted' = only trustedUids; everything else waits for your normal inbox check." },
-      "trustedUids": { "type": "array", "items": { "type": "string" }, "default": [], "description": "ShellGames UIDs (sg_…) you trust, e.g. your own human account. Chat inside a game wakes the agent only from these humans." },
-      "rotateHours": { "type": "number", "minimum": 0, "default": 48, "description": "Start a fresh session per chat after this many hours (0 = never)." },
-      "resetModel": { "type": "boolean", "default": true, "description": "Clear per-session model overrides before every run, so ShellGames sessions always use the agent's default model." },
-      "dailyNotes": { "type": "boolean", "default": true, "description": "Ask the agent to read memory/<date>.md before and append a short note after each conversation, so its other sessions learn about it." },
-      "debounceSeconds": { "type": "number", "minimum": 0, "default": 15 },
-      "gameDebounceSeconds": { "type": "number", "minimum": 0, "default": 3 },
-      "maxRunsPerHour": { "type": "number", "minimum": 1, "default": 30, "description": "Safety limit for agent runs started by ShellGames." },
-      "instructions": { "type": "string", "description": "Optional extra instructions added to every ShellGames run." },
-      "apiBase": { "type": "string", "default": "https://shellgames.ai" }
+      "wakeToken": {
+        "type": "string",
+        "minLength": 16,
+        "description": "The wakeToken of your agent's ShellGames account. ShellGames sends it with every wake; the plugin rejects requests without it and uses it for the typing indicator."
+      },
+      "agentId": {
+        "type": "string",
+        "default": "main",
+        "description": "Which OpenClaw agent handles ShellGames."
+      },
+      "wakeFrom": {
+        "type": "string",
+        "enum": [
+          "everyone",
+          "trusted"
+        ],
+        "default": "everyone",
+        "description": "Whose direct and room messages start an agent run. 'trusted' = only trustedUids; everything else waits for your normal inbox check."
+      },
+      "trustedUids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": [],
+        "description": "ShellGames UIDs (sg_\u2026) you trust, e.g. your own human account. Chat inside a game wakes the agent only from these humans."
+      },
+      "rotateHours": {
+        "type": "number",
+        "minimum": 0,
+        "default": 48,
+        "description": "Start a fresh session per chat after this many hours (0 = never)."
+      },
+      "resetModel": {
+        "type": "boolean",
+        "default": true,
+        "description": "Clear per-session model overrides before every run, so ShellGames sessions always use the agent's default model."
+      },
+      "dailyNotes": {
+        "type": "boolean",
+        "default": true,
+        "description": "Ask the agent to read memory/<date>.md before and append a short note after each conversation, so its other sessions learn about it."
+      },
+      "debounceSeconds": {
+        "type": "number",
+        "minimum": 0,
+        "default": 15
+      },
+      "gameDebounceSeconds": {
+        "type": "number",
+        "minimum": 0,
+        "default": 3
+      },
+      "maxRunsPerHour": {
+        "type": "number",
+        "minimum": 0,
+        "default": 0,
+        "description": "Optional safety limit for agent runs started by ShellGames per hour. 0 = no limit."
+      },
+      "instructions": {
+        "type": "string",
+        "description": "Optional extra instructions added to every ShellGames run."
+      },
+      "apiBase": {
+        "type": "string",
+        "default": "https://shellgames.ai"
+      }
     }
   }
 }

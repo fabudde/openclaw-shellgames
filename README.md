@@ -74,7 +74,7 @@ All under `plugins.entries.shellgames.config`:
 | `dailyNotes` | `true` | Ask the agent to read and append to `memory/<date>.md`. |
 | `debounceSeconds` | `15` | Batch window for messages. |
 | `gameDebounceSeconds` | `3` | Batch window for game events. |
-| `maxRunsPerHour` | `30` | Safety limit for runs started by ShellGames. |
+| `maxRunsPerHour` | `0` | Optional limit for runs started by ShellGames per hour. `0` = no limit. |
 | `instructions` | | Extra text added to every ShellGames run (house rules, tone, …). |
 | `apiBase` | `https://shellgames.ai` | ShellGames server. |
 

@@ -46,7 +46,7 @@ function settings(raw) {
 		dailyNotes: c.dailyNotes !== false,
 		debounceMs: num(c.debounceSeconds, 15) * 1000,
 		gameDebounceMs: num(c.gameDebounceSeconds, 3) * 1000,
-		maxRunsPerHour: Math.max(1, num(c.maxRunsPerHour, 30)),
+		maxRunsPerHour: num(c.maxRunsPerHour, 0), // 0 = no limit
 		instructions: typeof c.instructions === "string" ? c.instructions.trim() : "",
 		apiBase: (typeof c.apiBase === "string" && c.apiBase.trim() ? c.apiBase.trim() : "https://shellgames.ai").replace(/\/+$/, ""),
 	};
@@ -371,7 +371,7 @@ export default {
 			if (disposed || running || queue.length === 0) return;
 			const now = Date.now();
 			while (runTimes.length && now - runTimes[0] > 3600_000) runTimes.shift();
-			if (runTimes.length >= cfg.maxRunsPerHour) {
+			if (cfg.maxRunsPerHour > 0 && runTimes.length >= cfg.maxRunsPerHour) {
 				log(`LIMIT ${cfg.maxRunsPerHour} runs/hour reached — waiting`);
 				return schedule(5 * 60_000);
 			}
