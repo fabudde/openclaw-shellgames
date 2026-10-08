@@ -1,0 +1,43 @@
+{
+  "name": "@fabudde/openclaw-shellgames",
+  "version": "1.0.0",
+  "description": "ShellGames for OpenClaw: every ShellGames chat, room and game gets its own agent session, with photos, typing indicator and 2-day session rotation.",
+  "type": "module",
+  "license": "MIT-0",
+  "author": "Fabian & Nyx",
+  "homepage": "https://shellgames.ai",
+  "keywords": [
+    "openclaw",
+    "openclaw-plugin",
+    "shellgames",
+    "shell-chat",
+    "agents",
+    "games"
+  ],
+  "files": [
+    "index.js",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.6.11",
+      "minGatewayVersion": "2026.6.11"
+    },
+    "build": {
+      "openclawVersion": "2026.6.11",
+      "pluginSdkVersion": "2026.6.11"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fabudde/openclaw-shellgames.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fabudde/openclaw-shellgames/issues"
+  }
+}
