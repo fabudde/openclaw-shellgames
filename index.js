@@ -47,6 +47,7 @@ function settings(raw) {
 		debounceMs: num(c.debounceSeconds, 15) * 1000,
 		gameDebounceMs: num(c.gameDebounceSeconds, 3) * 1000,
 		maxRunsPerHour: num(c.maxRunsPerHour, 0), // 0 = no limit
+		rotateAtContextPercent: Math.min(95, num(c.rotateAtContextPercent, 60)), // 0 = off
 		instructions: typeof c.instructions === "string" ? c.instructions.trim() : "",
 		apiBase: (typeof c.apiBase === "string" && c.apiBase.trim() ? c.apiBase.trim() : "https://shellgames.ai").replace(/\/+$/, ""),
 	};
@@ -194,6 +195,47 @@ export default {
 			return s;
 		}
 
+		// --- Size-based rotation ---
+		// Runs started by plugins go through OpenClaw's post-run "CLI budget" check, which estimates the
+		// WHOLE raw transcript (including history that was already compacted). Once that passes the
+		// session budget, OpenClaw compacts after every single run, and each compaction can take minutes.
+		// So we start a fresh session before the raw transcript gets there.
+		function rawTranscriptTokens(sessionKey) {
+			try {
+				const entry = api.runtime.agent.session.getSessionEntry({ agentId: cfg.agentId, sessionKey });
+				const file = entry?.sessionFile;
+				if (!file || !fs.existsSync(file)) return null;
+				let chars = 0;
+				for (const line of fs.readFileSync(file, "utf8").split("\n")) {
+					if (!line.includes('"type":"message"')) continue;
+					try {
+						const e = JSON.parse(line);
+						if (e.type === "message") chars += JSON.stringify(e.message?.content ?? "").length;
+					} catch {}
+				}
+				const budget = Number(entry.contextTokens) > 0 ? Number(entry.contextTokens) : 200_000;
+				return { tokens: Math.ceil(chars / 4), budget };
+			} catch (err) {
+				log(`note: transcript size check failed for ${sessionKey}: ${err.message}`);
+				return null;
+			}
+		}
+		function rotateIfLarge(family, sess) {
+			if (!cfg.rotateAtContextPercent) return sess;
+			const size = rawTranscriptTokens(sess.key);
+			if (!size) return sess;
+			const limit = Math.floor(((size.budget - 20_000) * cfg.rotateAtContextPercent) / 100);
+			if (size.tokens < limit) return sess;
+			const now = Date.now();
+			const stamp = new Date(now).toISOString().slice(0, 16).replace(/[-:]/g, "").replace("T", "-");
+			const next = { key: `${baseKeyFor(family)}-${stamp}`, startedAt: now, previousKey: sess.key, announced: false };
+			if (next.key === sess.key) return sess;
+			log(`ROTATE (size ~${size.tokens} of ${size.budget} tokens) ${sess.key} → ${next.key}`);
+			sessions.families[family] = next;
+			saveSessions();
+			return next;
+		}
+
 		// --- Typing indicator (authenticated with the agent's wake token) ---
 		function typingTargets(items, family) {
 			if (family.startsWith("game:")) return items.some((it) => it.type === "turn" || it.kind === "game-chat") ? [{ game_id: family.slice(5) }] : [];
@@ -267,7 +309,7 @@ export default {
 				? []
 				: [
 						"🔄 NEW SHELLGAMES SESSION — please read first",
-						`Your ShellGames session${isRoom ? ` for the room "${roomName}"` : ""} is replaced every few days so your context stays fresh. This is the first message in the new session ${sess.key}${sess.previousKey ? ` (previous: ${sess.previousKey})` : ""}. You have no history here yet. Before you answer:`,
+						`Your ShellGames session${isRoom ? ` for the room "${roomName}"` : ""} is replaced every few days (or when it gets long) so your context stays fresh. This is the first message in the new session ${sess.key}${sess.previousKey ? ` (previous: ${sess.previousKey})` : ""}. You have no history here yet. Before you answer:`,
 						...(cfg.dailyNotes ? [`- Read your daily notes of the last days: memory/${today}.md, memory/${yesterday}.md, memory/${dayStr(2)}.md (look for "## 🎮 ShellGames" blocks).`] : []),
 						isRoom ? `- Read the room history: GET ${api_}/chatrooms/${roomId}/messages?limit=100` : "- Check recent conversations: GET " + api_ + "/messages/inbox and GET " + api_ + "/messages/history?with=<uid>",
 						...(sess.previousKey ? [`- Missing something? Use sessions_history on ${sess.previousKey}.`] : []),
@@ -391,7 +433,7 @@ export default {
 			await sendTyping("start", targets);
 			const typingTimer = targets.length ? setInterval(() => sendTyping("start", targets), TYPING_REFRESH_MS) : null;
 			try {
-				sess = currentSession(family);
+				sess = rotateIfLarge(family, currentSession(family));
 				const notes = await collectImages(items);
 				const message = buildMessage(items, sess, family, notes);
 				if (cfg.resetModel) await resetModel(sess.key);

@@ -78,6 +78,13 @@
       "apiBase": {
         "type": "string",
         "default": "https://shellgames.ai"
+      },
+      "rotateAtContextPercent": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 95,
+        "default": 60,
+        "description": "Start a fresh session when a ShellGames session's transcript reaches this share of the context budget (0 = off). Avoids OpenClaw compacting after every run once the raw transcript is large."
       }
     }
   }
