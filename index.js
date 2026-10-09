@@ -200,11 +200,20 @@ export default {
 		// WHOLE raw transcript (including history that was already compacted). Once that passes the
 		// session budget, OpenClaw compacts after every single run, and each compaction can take minutes.
 		// So we start a fresh session before the raw transcript gets there.
+		let noFileNoted = false;
 		function rawTranscriptTokens(sessionKey) {
 			try {
 				const entry = api.runtime.agent.session.getSessionEntry({ agentId: cfg.agentId, sessionKey });
 				const file = entry?.sessionFile;
-				if (!file || !fs.existsSync(file)) return null;
+				if (!file || !fs.existsSync(file)) {
+					// OpenClaw 2026.8+ keeps transcripts in SQLite and counts compacted history correctly,
+					// so size-based rotation isn't needed there.
+					if (entry && !noFileNoted) {
+						noFileNoted = true;
+						log("note: no transcript file (OpenClaw 2026.8+) — size-based rotation not needed, skipped");
+					}
+					return null;
+				}
 				let chars = 0;
 				for (const line of fs.readFileSync(file, "utf8").split("\n")) {
 					if (!line.includes('"type":"message"')) continue;
